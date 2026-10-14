@@ -310,3 +310,207 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, [role='button
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* Refined, phone-first visual layer */
+:root {
+  --orange: #f15a32;
+  --orange-dark: #d94823;
+  --ink: #20201e;
+  --muted: #77756f;
+  --line: #e8e6e0;
+  --panel: #fff;
+}
+
+body { color: var(--ink); background: #f5f4f0; }
+button, input, textarea { -webkit-tap-highlight-color: transparent; }
+button { touch-action: manipulation; }
+
+.dashboard-page {
+  padding-bottom: 36px;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(255, 217, 197, .34), transparent 30%),
+    linear-gradient(180deg, #faf9f6 0%, #f4f3ef 100%);
+}
+.dashboard-shell { max-width: 1160px; }
+.topbar { height: 78px; border-color: rgba(32, 32, 30, .09); }
+.brand-mark { width: 42px; height: 42px; border-radius: 14px; background: linear-gradient(145deg, #ff754a, #e84b22); box-shadow: 0 7px 16px rgba(232, 75, 34, .22); }
+.brand-copy strong { font-size: 20px; letter-spacing: -1.2px; }
+.brand-copy small { font-size: 8px; letter-spacing: 1.55px; }
+.account-chip { padding: 9px 14px; background: rgba(255,255,255,.72); }
+.icon-button { width: 42px; height: 42px; border-radius: 13px; background: rgba(255,255,255,.76); }
+.welcome-row { padding: 48px 0 30px; }
+.welcome-row h1 { font-size: clamp(38px, 5vw, 50px); letter-spacing: -2.5px; }
+.welcome-row p { color: #74716b; font-size: 14px; }
+.eyebrow, .section-kicker, .panel-eyebrow { letter-spacing: 1.7px; }
+.member-layout { grid-template-columns: minmax(0, 1.1fr) minmax(340px, .9fr); gap: clamp(24px, 4vw, 54px); }
+.member-column { padding: 30px; border-color: #e9e7e1; border-radius: 22px; background: rgba(255,255,255,.94); box-shadow: 0 16px 45px rgba(42, 37, 29, .045); }
+.section-heading { margin-bottom: 27px; }
+.section-heading h2 { font-size: 22px; }
+.member-avatar { width: 44px; height: 44px; border: 1px solid #ffe0d3; border-radius: 15px; background: #fff3ed; }
+.field { gap: 9px; color: #595750; font-size: 12px; }
+.input-wrap { height: 48px; padding: 0 13px; border-color: #e7e5df; border-radius: 12px; background: #fbfaf8; }
+.input-wrap:focus-within { border-color: #f28a69; box-shadow: 0 0 0 4px rgba(241, 90, 50, .09); }
+.input-wrap input { color: #302f2c; font-size: 13px; }
+.field em { font-size: 8px; letter-spacing: .75px; }
+.guide-trigger-btn { min-height: 30px; padding: 4px 10px; border-color: #f2d7cc; font-size: 10px; }
+.guide-card { padding: 20px; border-color: #f1dcd2; border-radius: 16px; }
+.guide-lead { font-size: 12px; }
+.guide-tabs { gap: 5px; border-radius: 12px; }
+.guide-tab { min-height: 36px; font-size: 11px; }
+.guide-steps { gap: 12px; }
+.guide-steps strong { font-size: 12px; }
+.guide-steps small { font-size: 11px; }
+.form-separator { margin: 27px 0 24px; background: #eeece7; }
+.qr-form-heading h3 { font-size: 16px; }
+.field-note { font-size: 11px; line-height: 1.55; }
+.save-button { min-height: 50px; border-radius: 13px; background: linear-gradient(100deg, #f2673f, #e94d26); box-shadow: 0 8px 18px rgba(233, 77, 38, .2); font-size: 13px; }
+.save-button:hover:not(:disabled) { background: linear-gradient(100deg, #ea5932, #d94420); box-shadow: 0 10px 22px rgba(233, 77, 38, .24); }
+.profile-footnote { color: #858179; font-size: 10px; }
+.pass-column { position: sticky; top: 24px; padding-top: 0; }
+.pass-card { padding: 24px 24px 17px; border: 1px solid rgba(255,255,255,.08); border-radius: 22px; background: linear-gradient(148deg, #252523, #171716 78%); box-shadow: 0 24px 52px rgba(28, 25, 22, .2); }
+.pass-card::before { top: -145px; right: -58px; width: 282px; height: 282px; border-color: rgba(255, 111, 72, .25); box-shadow: 0 0 0 24px rgba(244, 90, 50, .045), 0 0 0 48px rgba(244, 90, 50, .028); }
+.pass-overline { color: #ff7952; }
+.pass-brand-icon { width: 38px; height: 38px; border-radius: 13px; }
+.pass-divider { margin: 20px 0; }
+.qr-stage { min-height: 0; padding: 18px; border: 1px solid #eeece7; border-radius: 16px; background: linear-gradient(150deg, #fff, #f5f4f0); }
+.live-qr { gap: 12px; }
+.live-label { align-self: center; padding: 5px 10px; border-radius: 999px; background: #fff0e9; font-size: 9px; letter-spacing: 1.3px; }
+.qr-image { width: min(100%, 290px); max-height: 290px; }
+.live-code { max-width: 100%; color: #88847d; font-size: 9px; }
+.progress-bar { height: 5px; background: #e9e7e1; }
+.progress-fill { background: linear-gradient(90deg, #f15a32, #ff9a70); }
+.progress-label { font-size: 10px; }
+.pass-person { padding: 17px 1px 15px; }
+.pass-initials { width: 40px; height: 40px; flex-basis: 40px; border-radius: 13px; }
+.pass-person-copy strong { font-size: 13px; }
+.pass-bottom { padding-top: 13px; font-size: 9px; }
+.expiry-note { gap: 9px; padding: 14px 4px 0; font-size: 11px; }
+.expiry-note svg { color: #ed6842; }
+.dashboard-footer { padding-top: 28px; font-size: 9px; }
+.dashboard-footer button { min-height: 36px; font-size: 11px; }
+
+.gate-page { background: radial-gradient(ellipse at 15% 5%, rgba(255, 220, 203, .4), transparent 32%), #f5f4f0; }
+.gate-layout { border-color: #e7e4de; border-radius: 26px; box-shadow: 0 28px 85px rgba(44, 37, 28, .12); }
+.gate-story { background: linear-gradient(145deg, #252523 0%, #171716 100%); }
+.gate-story::before { border-color: rgba(255, 113, 74, .25); }
+.story-copy h1 { letter-spacing: -2.7px; }
+.gate-panel { background: rgba(255,255,255,.76); }
+.gate-card h2 { letter-spacing: -1.3px; }
+.gate-subtitle { font-size: 13px; }
+.gate-form { gap: 18px; }
+.gate-form .field { font-size: 12px; }
+.gate-form .input-wrap { height: 50px; border-radius: 12px; }
+.gate-form .input-wrap input { font-size: 14px; }
+.gate-assurance { font-size: 10px; }
+.vault-gate-page { background: radial-gradient(ellipse at 50% 0%, #fff0e8, transparent 46%), #f5f4f0; }
+.vault-gate-card { border-color: #e8e5df; border-radius: 22px; box-shadow: 0 24px 70px rgba(44,37,28,.1); }
+.config-steps strong { font-size: 12px; }
+.config-steps small, .config-warning { font-size: 11px; }
+
+@media (max-width: 850px) {
+  .dashboard-page { padding-right: 22px; padding-left: 22px; }
+  .member-column { padding: 25px 23px; }
+  .pass-column { top: 18px; }
+}
+
+@media (max-width: 680px) {
+  body { background: #f5f4f0; }
+  .dashboard-page { padding: 0 16px max(24px, env(safe-area-inset-bottom)); }
+  .dashboard-shell { width: 100%; }
+  .topbar { position: sticky; top: 0; z-index: 20; height: 66px; margin: 0 -16px; padding: 0 16px; border-bottom: 1px solid rgba(32,32,30,.08); background: rgba(250,249,246,.91); backdrop-filter: blur(18px); }
+  .brand { gap: 9px; }
+  .brand-mark { width: 37px; height: 37px; border-radius: 12px; }
+  .brand-mark svg { width: 18px; height: 18px; }
+  .brand-copy strong { font-size: 18px; }
+  .brand-copy small { font-size: 7px; letter-spacing: 1.35px; }
+  .topbar-actions { gap: 8px; }
+  .account-chip { display: flex; width: 30px; height: 30px; justify-content: center; padding: 0; border: 1px solid #dfe9e1; border-radius: 50%; background: #f2f8f3; }
+  .account-chip .online-dot { width: 8px; height: 8px; box-shadow: 0 0 0 4px rgba(87,169,120,.12); }
+  .icon-button { width: 38px; min-width: 38px; height: 38px; border-radius: 12px; }
+  .welcome-row { padding: 26px 2px 17px; }
+  .eyebrow { font-size: 9px; letter-spacing: 1.45px; }
+  .welcome-row h1 { margin: 10px 0 6px; font-size: clamp(34px, 9vw, 40px); letter-spacing: -2px; }
+  .welcome-row p { max-width: 340px; color: #77736d; font-size: 12px; line-height: 1.55; }
+  .flash { margin-bottom: 15px; padding: 12px; border-radius: 13px; font-size: 12px; }
+  .member-layout { flex-direction: column-reverse; gap: 16px; }
+  .member-column, .pass-column { width: 100%; }
+  .pass-column { position: static; padding: 0; }
+  .pass-card { padding: 19px 18px 15px; border-radius: 20px; }
+  .pass-divider { margin: 15px 0; }
+  .qr-stage { min-height: 0; padding: clamp(15px, 5vw, 21px); border-radius: 15px; }
+  .qr-image { width: min(100%, 278px); max-height: 278px; }
+  .live-qr { gap: 10px; }
+  .live-code { max-width: 100%; font-size: 8px; line-height: 1.4; }
+  .progress-wrap { gap: 7px; }
+  .pass-person { padding: 15px 1px 13px; }
+  .pass-bottom { font-size: 8px; letter-spacing: .8px; }
+  .expiry-note { padding: 12px 3px 0; font-size: 10px; }
+  .member-column { padding: 22px 19px 19px; border-radius: 19px; }
+  .section-heading { margin-bottom: 22px; }
+  .section-heading h2 { font-size: 20px; }
+  .member-avatar { width: 41px; height: 41px; }
+  .form-grid { grid-template-columns: 1fr; gap: 15px; }
+  .field-full { grid-column: auto; }
+  .field { gap: 8px; font-size: 12px; }
+  .input-wrap { height: 50px; border-radius: 12px; }
+  .input-wrap input { font-size: 16px; }
+  .guide-trigger-btn { min-height: 32px; }
+  .field-label-row { align-items: flex-start; flex-direction: column; gap: 9px; }
+  .field-label-row > span { flex-wrap: wrap; gap: 4px 8px; }
+  .field em { font-size: 8px; }
+  .guide-card { padding: 16px 14px; border-radius: 14px; }
+  .guide-header { align-items: flex-start; gap: 8px; }
+  .guide-title { align-items: flex-start; }
+  .guide-title strong { font-size: 12px; line-height: 1.4; }
+  .guide-badge { flex: 0 0 auto; }
+  .guide-lead { font-size: 11px; }
+  .guide-tabs { gap: 3px; padding: 3px; }
+  .guide-tab { min-height: 38px; padding: 6px 3px; font-size: 10px; }
+  .guide-steps { gap: 12px; }
+  .guide-steps li { gap: 9px; }
+  .guide-steps strong { font-size: 11px; line-height: 1.4; }
+  .guide-steps small { font-size: 10.5px; }
+  .guide-footer-note { font-size: 10px; }
+  .form-separator { margin: 23px 0 20px; }
+  .qr-form-heading { align-items: flex-start; }
+  .qr-form-heading h3 { font-size: 15px; }
+  .field-note { align-items: flex-start; font-size: 10.5px; }
+  .field-note svg { flex: 0 0 auto; margin-top: 1px; }
+  .save-button { min-height: 52px; font-size: 13px; }
+  .profile-footnote { align-items: flex-start; font-size: 10px; line-height: 1.45; }
+  .dashboard-footer { align-items: flex-start; flex-direction: column; gap: 9px; padding: 18px 3px 0; }
+  .dashboard-footer > span { font-size: 8px; letter-spacing: 1px; }
+  .dashboard-footer button { min-height: 34px; }
+  .gate-page { min-height: 100svh; padding: 0; background: white; }
+  .gate-layout { min-height: 100svh; border-radius: 0; }
+  .gate-story { min-height: 225px; padding: 21px 23px 18px; }
+  .gate-story::before { top: -3%; right: -38%; width: 350px; height: 350px; }
+  .gate-story .brand-mark { width: 35px; height: 35px; }
+  .story-copy { margin: 27px 0 4px; padding: 0; }
+  .story-copy h1 { margin: 10px 0 8px; font-size: 32px; letter-spacing: -1.8px; }
+  .story-copy > p { max-width: 335px; font-size: 11px; }
+  .story-stamp, .story-bottom, .story-fade-mark { display: none; }
+  .gate-panel { padding: 25px 23px calc(70px + env(safe-area-inset-bottom)); background: #fff; }
+  .gate-card { max-width: 440px; }
+  .gate-card h2 { margin-top: 8px; font-size: 27px; }
+  .gate-subtitle { margin-bottom: 22px; font-size: 12px; }
+  .gate-form { gap: 16px; }
+  .gate-form .input-wrap { height: 51px; }
+  .gate-form .input-wrap input { font-size: 16px; }
+  .gate-submit { margin-top: 5px; }
+  .gate-assurance { margin-top: 23px; font-size: 9px; }
+  .gate-panel-bottom { right: 23px; bottom: max(17px, env(safe-area-inset-bottom)); }
+  .vault-gate-page { min-height: 100svh; padding: 18px; }
+  .vault-gate-card { padding: 26px 22px; border-radius: 20px; }
+  .loading-page { min-height: 100svh; }
+}
+
+@media (max-width: 380px) {
+  .dashboard-page { padding-right: 12px; padding-left: 12px; }
+  .topbar { margin-right: -12px; margin-left: -12px; padding-right: 12px; padding-left: 12px; }
+  .member-column { padding-right: 15px; padding-left: 15px; }
+  .source-tab { gap: 4px; font-size: 10px; }
+  .qr-form-heading h3 { font-size: 14px; }
+  .gate-story { padding-right: 19px; padding-left: 19px; }
+  .gate-panel { padding-right: 19px; padding-left: 19px; }
+}
