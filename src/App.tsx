@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import QRCode from 'qrcode'
 import {
   ArrowRight,
@@ -24,16 +24,19 @@ import {
 } from 'lucide-react'
 import type { Session, User } from '@supabase/supabase-js'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
+import { RecoveryScreen } from './RecoveryScreen'
 import {
   emptyMemberData,
+  normalizeMemberData,
   type MemberData,
 } from './lib/vault'
 
-type Screen = 'config' | 'loading' | 'auth' | 'dashboard'
+type Screen = 'config' | 'loading' | 'auth' | 'dashboard' | 'error'
 type AuthMode = 'login' | 'signup'
 type Flash = { kind: 'success' | 'error' | 'info'; message: string } | null
 
 const EMPTY_FORM = emptyMemberData()
+const RESTORE_TIMEOUT_MS = 15_000
 
 function friendlyError(message: string): string {
   if (message.includes('Invalid login credentials')) return 'Adresse e-mail ou mot de passe incorrect.'
@@ -55,6 +58,8 @@ function App() {
   const [showPassword, setShowPassword] = useState(false)
   const [showDetails, setShowDetails] = useState(false)
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null)
+  const [restoreAttempt, setRestoreAttempt] = useState(0)
+  const [restoreError, setRestoreError] = useState('')
 
   // Device ID Guide State
   const [showGuide, setShowGuide] = useState(false)
@@ -71,62 +76,104 @@ function App() {
     return parts.length ? parts.slice(0, 2).map((part) => part[0]).join('').toUpperCase() : 'BF'
   }, [member.name])
 
-  const inspectSession = useCallback(async (session: Session | null) => {
-    if (!session || !supabase) {
-      setUser(null)
-      setMember(EMPTY_FORM)
-      setScreen(isSupabaseConfigured ? 'auth' : 'config')
-      return
-    }
-
-    setUser(session.user)
-    setScreen('loading')
-    const { data, error } = await supabase
-      .from('member_vault')
-      .select('user_id, ciphertext, updated_at')
-      .eq('user_id', session.user.id)
-      .maybeSingle()
-
-    if (error) {
-      setFlash({ kind: 'error', message: `Impossible de lire les données : ${friendlyError(error.message)}` })
-      setScreen('auth')
-      return
-    }
-
-    if (data) {
-      try {
-        const parsed = JSON.parse(data.ciphertext) as MemberData
-        setMember({ ...EMPTY_FORM, ...parsed })
-        if (parsed.deviceId) {
-          try { localStorage.setItem('basicpass_device_id', parsed.deviceId) } catch {}
-        }
-      } catch {
-        setMember(EMPTY_FORM)
-      }
-      setLastSavedAt(data.updated_at ?? null)
-    } else {
-      setMember(EMPTY_FORM)
-      setLastSavedAt(null)
-    }
-
-    setScreen('dashboard')
-  }, [])
-
   useEffect(() => {
-    if (!supabase) return
+    const client = supabase
+    if (!client) return
     let active = true
-    const sync = async (session: Session | null) => {
-      if (active) await inspectSession(session)
+    let requestedUserId: string | null | undefined
+    let requestId = 0
+    let request: AbortController | undefined
+    let scheduledSync: number | undefined
+    let timeout: number | undefined
+
+    const fail = (message: string) => {
+      if (!active) return
+      setRestoreError(message)
+      setScreen('error')
     }
-    void supabase.auth.getSession().then(({ data }) => sync(data.session))
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      void sync(session)
+
+    const sync = async (session: Session | null) => {
+      if (!active) return
+      const userId = session?.user.id ?? null
+      // Token refresh and focus events must not reload the same profile.
+      if (requestedUserId === userId) return
+      requestedUserId = userId
+      const currentRequest = ++requestId
+      request?.abort()
+      window.clearTimeout(timeout)
+      setUser(session?.user ?? null)
+      setRestoreError('')
+
+      if (!session) {
+        setMember(EMPTY_FORM)
+        setLastSavedAt(null)
+        setScreen('auth')
+        return
+      }
+
+      setScreen('loading')
+      const controller = new AbortController()
+      request = controller
+      timeout = window.setTimeout(() => {
+        if (!active || currentRequest !== requestId) return
+        ++requestId
+        controller.abort()
+        fail('Le chargement prend trop de temps. Vérifie ta connexion, puis réessaie.')
+      }, RESTORE_TIMEOUT_MS)
+
+      try {
+        const { data, error } = await client
+          .from('member_vault')
+          .select('user_id, ciphertext, updated_at')
+          .eq('user_id', session.user.id)
+          .abortSignal(controller.signal)
+          .maybeSingle()
+
+        if (!active || currentRequest !== requestId) return
+        if (error) throw new Error(error.message)
+
+        let restored = emptyMemberData()
+        if (data) {
+          try {
+            restored = normalizeMemberData(JSON.parse(data.ciphertext))
+          } catch {
+            setFlash({ kind: 'info', message: 'Les anciennes informations n’ont pas pu être restaurées. Vérifie ton profil avant de l’enregistrer.' })
+          }
+        }
+        setMember(restored)
+        setLastSavedAt(data?.updated_at ?? null)
+        if (restored.deviceId) {
+          try { localStorage.setItem('basicpass_device_id', restored.deviceId) } catch {}
+        }
+        setScreen('dashboard')
+      } catch (error) {
+        if (!active || currentRequest !== requestId) return
+        fail(`Impossible de charger ton espace : ${friendlyError(error instanceof Error ? error.message : 'Réessaie dans un instant.')}`)
+      } finally {
+        if (currentRequest === requestId) window.clearTimeout(timeout)
+      }
+    }
+
+    setScreen('loading')
+    timeout = window.setTimeout(() => {
+      fail('Ta session n’a pas pu être rétablie. Vérifie ta connexion, puis réessaie.')
+    }, RESTORE_TIMEOUT_MS)
+
+    // INITIAL_SESSION restores storage once; getSession would duplicate that read.
+    const { data: { subscription } } = client.auth.onAuthStateChange((_event, session) => {
+      window.clearTimeout(scheduledSync)
+      // Leave the auth callback before making an authenticated database request.
+      scheduledSync = window.setTimeout(() => { void sync(session) }, 0)
     })
     return () => {
       active = false
+      ++requestId
+      request?.abort()
+      window.clearTimeout(timeout)
+      window.clearTimeout(scheduledSync)
       subscription.unsubscribe()
     }
-  }, [inspectSession])
+  }, [restoreAttempt])
 
   // ── Live GM2 Protocol ──
   useEffect(() => {
@@ -284,6 +331,7 @@ function App() {
 
   if (screen === 'config') return <ConfigurationScreen />
   if (screen === 'loading') return <LoadingScreen />
+  if (screen === 'error') return <RecoveryScreen message={restoreError} onRetry={() => setRestoreAttempt((attempt) => attempt + 1)} />
   if (screen === 'auth') {
     return <AuthScreen
       mode={authMode}
