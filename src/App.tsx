@@ -189,6 +189,16 @@ function App() {
     }
   }, [member.memberNumber])
 
+  const lockVault = useCallback(() => {
+    setVaultKey(null)
+    setMember(EMPTY_FORM)
+    setDynamicQr(null)
+    setDynamicCode('')
+    setProgress(0)
+    setVaultPassphrase('')
+    setScreen(user ? 'unlock' : 'auth')
+  }, [user])
+
   useEffect(() => {
     if (screen !== 'dashboard') return
     let timer = window.setTimeout(lockVault, 5 * 60 * 1000)
@@ -289,15 +299,6 @@ function App() {
     }
   }
 
-  const lockVault = useCallback(() => {
-    setVaultKey(null)
-    setMember(EMPTY_FORM)
-    setDynamicQr(null)
-    setDynamicCode('')
-    setProgress(0)
-    setVaultPassphrase('')
-    setScreen(user ? 'unlock' : 'auth')
-  }, [user])
 
   async function saveMember(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
