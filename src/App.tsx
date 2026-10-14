@@ -4,10 +4,15 @@ import {
   ArrowRight,
   BadgeCheck,
   Check,
+  ChevronDown,
+  ChevronUp,
+  Copy,
   Dumbbell,
   Eye,
   EyeOff,
   Hash,
+  HelpCircle,
+  Info,
   KeyRound,
   LockKeyhole,
   LogOut,
@@ -50,6 +55,11 @@ function App() {
   const [showPassword, setShowPassword] = useState(false)
   const [showDetails, setShowDetails] = useState(false)
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null)
+
+  // Device ID Guide State
+  const [showGuide, setShowGuide] = useState(false)
+  const [guideTab, setGuideTab] = useState<'ios' | 'android' | 'json'>('ios')
+  const [copiedExample, setCopiedExample] = useState(false)
 
   // Dynamic QR State
   const [dynamicQr, setDynamicQr] = useState<string | null>(null)
@@ -326,7 +336,169 @@ function App() {
                 <label className="field"><span>Numéro d'adhérent <button type="button" className="inline-eye" onClick={() => setShowDetails(!showDetails)} aria-label={showDetails ? 'Masquer le numéro' : 'Afficher le numéro'}>{showDetails ? <EyeOff size={14} /> : <Eye size={14} />}</button></span><div className="input-wrap"><KeyRound size={17} /><input value={member.memberNumber} onChange={(event) => setMember({ ...member, memberNumber: event.target.value })} placeholder="Ex. V010476970" maxLength={40} autoComplete="off" type={showDetails ? 'text' : 'password'} /></div></label>
                 <label className="field"><span>Code GUID / Club <em>DÉFAUT: ECQ</em></span><div className="input-wrap"><Hash size={17} /><input value={member.guid} onChange={(event) => setMember({ ...member, guid: event.target.value })} placeholder="ECQ" maxLength={10} autoComplete="off" /></div></label>
                 <label className="field"><span>Salle habituelle <em>FACULTATIF</em></span><div className="input-wrap"><Dumbbell size={17} /><input value={member.club} onChange={(event) => setMember({ ...member, club: event.target.value })} placeholder="Ex. Paris République" maxLength={100} /></div></label>
-                <label className="field field-full"><span>Device ID (Basic-Fit) <em>REQUIS POUR LES TOURNIQUETS</em></span><div className="input-wrap"><Smartphone size={17} /><input value={member.deviceId} onChange={(event) => setMember({ ...member, deviceId: event.target.value })} placeholder="Ex. b7e0a3e8-1edf-4e6c-b5d3-4ff2b1189c1e" maxLength={100} autoComplete="off" /></div></label>
+                <label className="field field-full">
+                  <span className="field-label-row">
+                    <span>Device ID (Basic-Fit) <em>REQUIS POUR LES TOURNIQUETS</em></span>
+                    <button
+                      type="button"
+                      className="guide-trigger-btn"
+                      onClick={() => setShowGuide(!showGuide)}
+                      aria-expanded={showGuide}
+                      title="Comment trouver le Device ID ?"
+                    >
+                      <HelpCircle size={13} />
+                      <span>{showGuide ? 'Masquer le guide' : 'Comment le trouver ?'}</span>
+                      {showGuide ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                    </button>
+                  </span>
+                  <div className="input-wrap">
+                    <Smartphone size={17} />
+                    <input
+                      value={member.deviceId}
+                      onChange={(event) => setMember({ ...member, deviceId: event.target.value })}
+                      placeholder="Ex. b7e0a3e8-1edf-4e6c-b5d3-4ff2b1189c1e"
+                      maxLength={100}
+                      autoComplete="off"
+                    />
+                  </div>
+                </label>
+
+                {showGuide && (
+                  <div className="guide-card">
+                    <div className="guide-header">
+                      <div className="guide-title">
+                        <Info size={16} />
+                        <strong>Comment obtenir son Device ID ?</strong>
+                      </div>
+                      <span className="guide-badge">Tutoriel</span>
+                    </div>
+
+                    <p className="guide-lead">
+                      Ce numéro <strong>n'apparaît pas dans les réglages système de votre téléphone</strong> (IMEI ou numéro de série) car Apple et Google interdisent aux applications d'accéder aux identifiants matériels. Il s'agit d'un identifiant généré par l'application <strong>Basic-Fit</strong> et associé à votre compte.
+                    </p>
+
+                    <div className="guide-tabs">
+                      <button
+                        type="button"
+                        className={`guide-tab ${guideTab === 'ios' ? 'active' : ''}`}
+                        onClick={() => setGuideTab('ios')}
+                      >
+                        🍏 iPhone (iOS)
+                      </button>
+                      <button
+                        type="button"
+                        className={`guide-tab ${guideTab === 'android' ? 'active' : ''}`}
+                        onClick={() => setGuideTab('android')}
+                      >
+                        🤖 Android
+                      </button>
+                      <button
+                        type="button"
+                        className={`guide-tab ${guideTab === 'json' ? 'active' : ''}`}
+                        onClick={() => setGuideTab('json')}
+                      >
+                        📋 Format JSON
+                      </button>
+                    </div>
+
+                    {guideTab === 'ios' && (
+                      <ol className="guide-steps">
+                        <li>
+                          <span className="step-num">1</span>
+                          <div>
+                            <strong>Installe une app d'inspection réseau gratuite</strong>
+                            <small>Télécharge <strong>Proxyman</strong> ou <strong>Stream</strong> sur l'App Store d'Apple.</small>
+                          </div>
+                        </li>
+                        <li>
+                          <span className="step-num">2</span>
+                          <div>
+                            <strong>Active l'écoute locale</strong>
+                            <small>Lance l'application et démarre la capture (le VPN local d'interception s'active en 1 clic).</small>
+                          </div>
+                        </li>
+                        <li>
+                          <span className="step-num">3</span>
+                          <div>
+                            <strong>Ouvre l'application Basic-Fit</strong>
+                            <small>Lance l'app officielle Basic-Fit connectée à ton compte. Elle effectue sa requête au démarrage.</small>
+                          </div>
+                        </li>
+                        <li>
+                          <span className="step-num">4</span>
+                          <div>
+                            <strong>Copie la valeur <code>deviceId</code></strong>
+                            <small>Retourne dans Proxyman/Stream, filtre les requêtes sur <code>member</code>, et copie la valeur de <code>deviceId</code>.</small>
+                          </div>
+                        </li>
+                      </ol>
+                    )}
+
+                    {guideTab === 'android' && (
+                      <ol className="guide-steps">
+                        <li>
+                          <span className="step-num">1</span>
+                          <div>
+                            <strong>Installe un outil de capture</strong>
+                            <small>Télécharge <strong>PCAPdroid</strong> ou <strong>Reqable</strong> depuis le Google Play Store (sans root nécessaire).</small>
+                          </div>
+                        </li>
+                        <li>
+                          <span className="step-num">2</span>
+                          <div>
+                            <strong>Démarre l'enregistrement</strong>
+                            <small>Lance la capture du trafic réseau de ton appareil.</small>
+                          </div>
+                        </li>
+                        <li>
+                          <span className="step-num">3</span>
+                          <div>
+                            <strong>Ouvre l'application Basic-Fit</strong>
+                            <small>Accède à ton profil membre pour déclencher l'échange avec les serveurs.</small>
+                          </div>
+                        </li>
+                        <li>
+                          <span className="step-num">4</span>
+                          <div>
+                            <strong>Récupère l'identifiant</strong>
+                            <small>Inspecte le contenu JSON de la réponse utilisateur et copie le texte du champ <code>"deviceId"</code>.</small>
+                          </div>
+                        </li>
+                      </ol>
+                    )}
+
+                    {guideTab === 'json' && (
+                      <div className="guide-code-box">
+                        <div className="guide-code-header">
+                          <span>Structure de la réponse API Basic-Fit :</span>
+                          <button
+                            type="button"
+                            className="guide-copy-btn"
+                            onClick={() => {
+                              navigator.clipboard.writeText('8d20fc96-1b0e-4982-8292-e97caed114ec')
+                              setCopiedExample(true)
+                              setTimeout(() => setCopiedExample(false), 2000)
+                            }}
+                          >
+                            {copiedExample ? <Check size={12} /> : <Copy size={12} />}
+                            <span>{copiedExample ? 'Copié !' : 'Copier exemple'}</span>
+                          </button>
+                        </div>
+                        <pre className="guide-pre">{`{
+  "member": {
+    "cardnumber": "${member.memberNumber.trim() || 'V010476970'}",
+    "deviceId": "8d20fc96-1b0e-4982-8292-e97caed114ec"
+  }
+}`}</pre>
+                      </div>
+                    )}
+
+                    <div className="guide-footer-note">
+                      <Sparkles size={14} />
+                      <span><strong>Permanent :</strong> ton Device ID ne change jamais tant que tu gardes le même téléphone. Une fois enregistré ici, c'est pour toujours !</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="form-separator" />

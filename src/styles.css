@@ -83,6 +83,39 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, [role='button
 .input-wrap svg { flex: 0 0 auto; }
 .input-wrap input { width: 100%; min-width: 0; padding: 0; border: 0; outline: 0; color: #353330; background: transparent; font-size: 12px; }
 .input-wrap input::placeholder, textarea::placeholder { color: #b7b4ae; }
+.field-label-row { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 8px; }
+.guide-trigger-btn { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border: 1px solid #f2ded3; border-radius: 999px; background: #fff7f2; color: var(--orange-dark); font-size: 10px; font-weight: 700; cursor: pointer; transition: all .16s ease; }
+.guide-trigger-btn:hover { background: #feece2; border-color: #eabfae; transform: translateY(-0.5px); color: var(--orange); }
+
+/* ── Device ID Guide ── */
+.guide-card { grid-column: 1 / -1; padding: 18px 20px; border: 1px solid #f2dfd5; border-radius: 14px; background: linear-gradient(180deg, #fffcfb 0%, #fff7f2 100%); box-shadow: 0 4px 18px rgba(244,81,30,.06); animation: fadeIn .25s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+.guide-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 11px; }
+.guide-title { display: flex; align-items: center; gap: 8px; color: var(--orange); }
+.guide-title strong { font: 700 13px 'Manrope', sans-serif; color: #2e2b28; }
+.guide-badge { font-size: 9px; font-weight: 800; letter-spacing: 0.9px; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: rgba(244,81,30,.1); color: var(--orange); }
+.guide-lead { margin: 0 0 14px; font-size: 11.5px; line-height: 1.6; color: #6f6b64; }
+.guide-lead strong { color: #353330; }
+.guide-tabs { display: flex; gap: 6px; margin-bottom: 14px; padding: 4px; border: 1px solid #ebd9cf; border-radius: 10px; background: rgba(255,255,255,.85); }
+.guide-tab { flex: 1; padding: 7px 10px; border: 0; border-radius: 7px; background: transparent; color: #7f7b74; font-size: 11px; font-weight: 700; cursor: pointer; transition: all .15s ease; text-align: center; }
+.guide-tab:hover { color: var(--ink); }
+.guide-tab.active { background: white; color: var(--orange-dark); box-shadow: 0 2px 7px rgba(44,37,28,.08); }
+.guide-steps { list-style: none; margin: 0 0 14px; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.guide-steps li { display: flex; align-items: flex-start; gap: 11px; }
+.step-num { flex: 0 0 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; background: var(--orange); color: white; font-size: 10px; font-weight: 800; margin-top: 1px; }
+.guide-steps div { display: flex; flex-direction: column; gap: 2px; }
+.guide-steps strong { font-size: 11px; color: #353330; }
+.guide-steps small { font-size: 10.5px; color: #7a766f; line-height: 1.45; }
+.guide-steps code { padding: 1px 5px; border-radius: 4px; background: #faede6; color: var(--orange-dark); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; }
+.guide-code-box { margin-bottom: 14px; border: 1px solid #363432; border-radius: 10px; background: #1c1b1a; overflow: hidden; }
+.guide-code-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: #242321; border-bottom: 1px solid #363432; color: #9c9892; font-size: 10px; }
+.guide-copy-btn { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border: 1px solid #4a4845; border-radius: 6px; background: #2f2e2c; color: #eee; font-size: 10px; font-weight: 600; cursor: pointer; transition: .15s; }
+.guide-copy-btn:hover { border-color: #6a6762; background: #3c3a38; color: white; }
+.guide-pre { margin: 0; padding: 12px 14px; color: #e5e3df; font: 11px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; overflow-x: auto; }
+.guide-footer-note { display: flex; align-items: flex-start; gap: 8px; padding-top: 11px; border-top: 1px dashed #eedad0; color: #7f7b73; font-size: 10.5px; line-height: 1.5; }
+.guide-footer-note svg { flex: 0 0 auto; color: #347b58; margin-top: 2px; }
+.guide-footer-note strong { color: #383531; }
+
 .inline-eye, .password-toggle { display: inline-grid; place-items: center; padding: 2px; border: 0; background: none; color: #aaa69f; cursor: pointer; }
 .inline-eye:hover, .password-toggle:hover { color: var(--orange); }
 .form-separator { height: 1px; margin: 25px 0 23px; background: #eeece7; }
