@@ -14,6 +14,15 @@
   --green: #347b58;
 }
 
+/* ── Live GM2 QR ── */
+.live-qr { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; }
+.live-label { color: var(--orange); font-size: 10px; font-weight: 800; letter-spacing: 1.65px; text-transform: uppercase; }
+.live-code { max-width: 280px; color: #96928b; font: 10px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; text-align: center; word-break: break-all; }
+.progress-wrap { width: 100%; display: flex; flex-direction: column; gap: 6px; }
+.progress-bar { width: 100%; height: 6px; border-radius: 3px; background: #eeece7; overflow: hidden; }
+.progress-fill { height: 100%; width: 0%; border-radius: 3px; background: linear-gradient(90deg, var(--orange), #ff815b); }
+.progress-label { display: flex; justify-content: space-between; color: #96928b; font-size: 10px; font-weight: 600; }
+
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; min-height: 100vh; }
 button, input, textarea { font: inherit; }

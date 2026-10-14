@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import QRCode from 'qrcode'
 import {
   ArrowRight,
@@ -7,27 +7,23 @@ import {
   Dumbbell,
   Eye,
   EyeOff,
-  FileImage,
   KeyRound,
   LockKeyhole,
   LogOut,
   QrCode,
   ShieldCheck,
   Sparkles,
-  Upload,
   UserRound,
 } from 'lucide-react'
 import type { Session, User } from '@supabase/supabase-js'
-import { isSupabaseConfigured, QR_BUCKET, supabase } from './lib/supabase'
+import { isSupabaseConfigured, supabase } from './lib/supabase'
 import {
   createSalt,
   decodeSalt,
-  decryptBytes,
   decryptText,
   deriveVaultKey,
   emptyMemberData,
   encodeSalt,
-  encryptBytes,
   encryptText,
   type MemberData,
   type VaultEnvelope,
@@ -37,8 +33,6 @@ type Screen = 'config' | 'loading' | 'auth' | 'create-vault' | 'unlock' | 'dashb
 type AuthMode = 'login' | 'signup'
 type Flash = { kind: 'success' | 'error' | 'info'; message: string } | null
 
-const MAX_IMAGE_BYTES = 2 * 1024 * 1024
-const ALLOWED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp'])
 const EMPTY_FORM = emptyMemberData()
 
 function friendlyError(message: string): string {
@@ -55,9 +49,6 @@ function App() {
   const [envelope, setEnvelope] = useState<VaultEnvelope | null>(null)
   const [vaultKey, setVaultKey] = useState<CryptoKey | null>(null)
   const [member, setMember] = useState<MemberData>(EMPTY_FORM)
-  const [qrImageUrl, setQrImageUrl] = useState<string | null>(null)
-  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null)
-  const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [flash, setFlash] = useState<Flash>(null)
   const [busy, setBusy] = useState(false)
   const [authMode, setAuthMode] = useState<AuthMode>('login')
@@ -67,8 +58,11 @@ function App() {
   const [confirmPassphrase, setConfirmPassphrase] = useState('')
   const [showPassphrase, setShowPassphrase] = useState(false)
   const [showDetails, setShowDetails] = useState(false)
-  const [qrMode, setQrMode] = useState<'text' | 'image'>('text')
-  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Dynamic QR State
+  const [dynamicQr, setDynamicQr] = useState<string | null>(null)
+  const [dynamicCode, setDynamicCode] = useState<string>('')
+  const [progress, setProgress] = useState(0)
 
   const memberInitials = useMemo(() => {
     const parts = member.name.trim().split(/\s+/).filter(Boolean)
@@ -81,7 +75,6 @@ function App() {
       setEnvelope(null)
       setVaultKey(null)
       setMember(EMPTY_FORM)
-      setQrImageUrl(null)
       setScreen(isSupabaseConfigured ? 'auth' : 'config')
       return
     }
@@ -126,24 +119,75 @@ function App() {
     }
   }, [inspectSession])
 
+  // ── Live GM2 Protocol ──
   useEffect(() => {
-    if (member.qrSource !== 'text' || !member.qrPayload.trim()) {
-      setQrCodeUrl(null)
+    if (!member.memberNumber.trim()) {
+      setDynamicQr(null)
+      setDynamicCode('')
       return
     }
+
+    const cardNr = member.memberNumber.trim()
+    const guid = 'ECQ'
+
+    let deviceId = ''
+    try {
+      deviceId = localStorage.getItem('basicpass_device_id') || ''
+      if (!deviceId) {
+        deviceId = crypto.randomUUID()
+        localStorage.setItem('basicpass_device_id', deviceId)
+      }
+    } catch {
+      deviceId = 'fallback-device-id'
+    }
+
     let cancelled = false
-    void QRCode.toDataURL(member.qrPayload.trim(), {
-      errorCorrectionLevel: 'M',
-      margin: 2,
-      width: 360,
-      color: { dark: '#171717', light: '#ffffff' },
-    }).then((dataUrl) => {
-      if (!cancelled) setQrCodeUrl(dataUrl)
-    }).catch(() => {
-      if (!cancelled) setQrCodeUrl(null)
-    })
-    return () => { cancelled = true }
-  }, [member.qrPayload, member.qrSource])
+    let rafId: number
+    let intervalId: number
+
+    const generate = async () => {
+      const iat = Math.floor(Date.now() / 1000)
+      const input = cardNr + guid + iat + deviceId
+      const buf = new TextEncoder().encode(input)
+      const hash = await crypto.subtle.digest('SHA-256', buf)
+      const hex = Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('')
+      const checksum = hex.slice(-8).toUpperCase()
+      const code = `GM2:${cardNr}:${guid}:${iat}:${checksum}`
+
+      if (cancelled) return
+      setDynamicCode(code)
+      try {
+        const dataUrl = await QRCode.toDataURL(code, {
+          errorCorrectionLevel: 'M',
+          margin: 2,
+          width: 360,
+          color: { dark: '#171717', light: '#ffffff' },
+        })
+        if (!cancelled) setDynamicQr(dataUrl)
+      } catch {
+        if (!cancelled) setDynamicQr(null)
+      }
+    }
+
+    void generate()
+    intervalId = window.setInterval(() => { void generate() }, 5000)
+
+    const startTime = Date.now()
+    const duration = 5000
+    const animate = () => {
+      if (cancelled) return
+      const elapsed = (Date.now() - startTime) % duration
+      setProgress((elapsed / duration) * 100)
+      rafId = requestAnimationFrame(animate)
+    }
+    rafId = requestAnimationFrame(animate)
+
+    return () => {
+      cancelled = true
+      cancelAnimationFrame(rafId)
+      window.clearInterval(intervalId)
+    }
+  }, [member.memberNumber])
 
   useEffect(() => {
     if (screen !== 'dashboard') return
@@ -159,11 +203,6 @@ function App() {
       events.forEach((event) => window.removeEventListener(event, refreshTimer))
     }
   }, [screen, lockVault])
-
-  useEffect(() => {
-    if (!qrImageUrl?.startsWith('blob:')) return
-    return () => URL.revokeObjectURL(qrImageUrl)
-  }, [qrImageUrl])
 
   async function submitAuth(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -238,18 +277,8 @@ function App() {
       const plaintext = await decryptText(envelope, key)
       const parsed = JSON.parse(plaintext) as MemberData
       const data = { ...EMPTY_FORM, ...parsed }
-      let imageUrl: string | null = null
-      if (data.qrSource === 'image' && data.imagePath && supabase) {
-        const { data: file, error } = await supabase.storage.from(QR_BUCKET).download(data.imagePath)
-        if (!error && file) {
-          const bytes = await decryptBytes(file, key)
-          imageUrl = URL.createObjectURL(new Blob([bytes], { type: data.imageType || 'image/png' }))
-        }
-      }
       setVaultKey(key)
       setMember(data)
-      setQrImageUrl(imageUrl)
-      setQrMode(data.qrSource === 'image' ? 'image' : 'text')
       setVaultPassphrase('')
       setScreen('dashboard')
       setFlash(null)
@@ -263,9 +292,9 @@ function App() {
   const lockVault = useCallback(() => {
     setVaultKey(null)
     setMember(EMPTY_FORM)
-    setSelectedImage(null)
-    setQrImageUrl(null)
-    setQrCodeUrl(null)
+    setDynamicQr(null)
+    setDynamicCode('')
+    setProgress(0)
     setVaultPassphrase('')
     setScreen(user ? 'unlock' : 'auth')
   }, [user])
@@ -277,50 +306,22 @@ function App() {
       setFlash({ kind: 'error', message: 'Un champ dépasse la longueur autorisée.' })
       return
     }
-    if (member.qrPayload.length > 2048) {
-      setFlash({ kind: 'error', message: 'Le contenu du QR est trop long (2 048 caractères maximum).' })
-      return
-    }
-    if (selectedImage && (!ALLOWED_IMAGE_TYPES.has(selectedImage.type) || selectedImage.size > MAX_IMAGE_BYTES)) {
-      setFlash({ kind: 'error', message: 'Choisis une image de 2 Mo maximum.' })
-      return
-    }
-    if (qrMode === 'image' && !selectedImage && (!member.imagePath || !qrImageUrl)) {
-      setFlash({ kind: 'error', message: 'Ajoute une capture du QR officiel avant d’enregistrer.' })
-      return
-    }
-    if (qrMode === 'text' && !member.qrPayload.trim()) {
-      setFlash({ kind: 'error', message: 'Colle le contenu du QR officiel, ou choisis le mode image.' })
+    if (!member.memberNumber.trim()) {
+      setFlash({ kind: 'error', message: 'Ton numéro de membre est requis pour générer le QR code.' })
       return
     }
 
     setBusy(true)
     setFlash(null)
-    const previousImagePath = member.imagePath
-    let nextImagePath = member.imagePath
-    let nextImageType = member.imageType
-    let uploadedImagePath: string | null = null
     try {
-      if (qrMode === 'image' && selectedImage) {
-        nextImagePath = `${user.id}/${crypto.randomUUID()}.enc`
-        uploadedImagePath = nextImagePath
-        nextImageType = selectedImage.type
-        const encryptedFile = await encryptBytes(await selectedImage.arrayBuffer(), vaultKey)
-        const { error: uploadError } = await supabase.storage.from(QR_BUCKET).upload(nextImagePath, encryptedFile, {
-          contentType: 'application/octet-stream',
-          upsert: false,
-        })
-        if (uploadError) throw uploadError
-      }
-
       const nextData: MemberData = {
         name: member.name.trim(),
         memberNumber: member.memberNumber.trim(),
         club: member.club.trim(),
-        qrSource: qrMode,
-        qrPayload: qrMode === 'text' ? member.qrPayload.trim() : '',
-        imagePath: qrMode === 'image' ? nextImagePath : null,
-        imageType: qrMode === 'image' ? nextImageType : null,
+        qrSource: 'text',
+        qrPayload: dynamicCode,
+        imagePath: null,
+        imageType: null,
       }
       const encrypted = await encryptText(JSON.stringify(nextData), vaultKey)
       const { data, error } = await supabase.from('member_vault').upsert({
@@ -330,21 +331,10 @@ function App() {
       }, { onConflict: 'user_id' }).select().single()
       if (error) throw error
 
-      if (previousImagePath && previousImagePath !== nextData.imagePath) {
-        await supabase.storage.from(QR_BUCKET).remove([previousImagePath])
-      }
-      if (selectedImage && qrMode === 'image') {
-        setQrImageUrl(URL.createObjectURL(selectedImage))
-      } else if (qrMode === 'text') {
-        setQrImageUrl(null)
-      }
-      setSelectedImage(null)
-      if (fileInputRef.current) fileInputRef.current.value = ''
       setMember(nextData)
       setEnvelope(data as VaultEnvelope)
       setFlash({ kind: 'success', message: 'Ton espace membre est enregistré et chiffré.' })
     } catch (error) {
-      if (uploadedImagePath) await supabase.storage.from(QR_BUCKET).remove([uploadedImagePath])
       setFlash({ kind: 'error', message: `Enregistrement impossible : ${friendlyError(error instanceof Error ? error.message : 'Vérifie Supabase.')}` })
     } finally {
       setBusy(false)
@@ -356,19 +346,6 @@ function App() {
     lockVault()
     const { error } = await supabase.auth.signOut()
     if (error) setFlash({ kind: 'error', message: friendlyError(error.message) })
-  }
-
-  function chooseImage(file?: File) {
-    if (!file) return
-    if (!ALLOWED_IMAGE_TYPES.has(file.type) || file.size > MAX_IMAGE_BYTES) {
-      setFlash({ kind: 'error', message: 'Choisis une image de 2 Mo maximum.' })
-      return
-    }
-    setSelectedImage(file)
-    setQrMode('image')
-    setMember((current) => ({ ...current, qrSource: 'image' }))
-    setQrImageUrl(URL.createObjectURL(file))
-    setFlash(null)
   }
 
   if (screen === 'config') return <ConfigurationScreen />
@@ -405,7 +382,6 @@ function App() {
     />
   }
 
-  const hasSavedQr = member.qrSource === 'text' ? Boolean(qrCodeUrl) : member.qrSource === 'image' ? Boolean(qrImageUrl) : false
   const lastSaved = envelope?.updated_at ? new Date(envelope.updated_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : null
 
   return (
@@ -448,23 +424,11 @@ function App() {
               </div>
 
               <div className="form-separator" />
-              <div className="qr-form-heading"><div><span className="section-kicker">TON QR CODE</span><h3>Comment veux-tu l’ajouter ?</h3></div><QrCode size={21} /></div>
-              <div className="source-switch" role="tablist" aria-label="Source du QR code">
-                <button type="button" role="tab" aria-selected={qrMode === 'text'} className={qrMode === 'text' ? 'source-tab active' : 'source-tab'} onClick={() => { setQrMode('text'); setMember({ ...member, qrSource: 'text' }) }}><QrCode size={16} />Coller le contenu</button>
-                <button type="button" role="tab" aria-selected={qrMode === 'image'} className={qrMode === 'image' ? 'source-tab active' : 'source-tab'} onClick={() => { setQrMode('image'); setMember({ ...member, qrSource: 'image' }) }}><FileImage size={16} />Importer une image</button>
-              </div>
+              <div className="qr-form-heading"><div><span className="section-kicker">TON QR CODE</span><h3>Génération automatique</h3></div><QrCode size={21} /></div>
+              <p className="field-note" style={{ marginTop: '-8px', marginBottom: '16px' }}>
+                <ShieldCheck size={14} /> Ton QR code Basic-Fit est généré dynamiquement et mis à jour toutes les 5 secondes grâce à ton numéro de membre.
+              </p>
 
-              {qrMode === 'text' ? (
-                <label className="field qr-input-field"><span>Contenu du QR fourni par l’application Basic-Fit</span><textarea value={member.qrPayload} onChange={(event) => setMember({ ...member, qrPayload: event.target.value, qrSource: 'text' })} placeholder="Colle ici le texte contenu dans ton QR officiel…" rows={3} maxLength={2048} spellCheck={false} autoComplete="off" /></label>
-              ) : (
-                <div className="upload-zone" onClick={() => fileInputRef.current?.click()} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); chooseImage(event.dataTransfer.files[0]) }} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') fileInputRef.current?.click() }}>
-                  <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={(event) => chooseImage(event.target.files?.[0])} />
-                  <span className="upload-icon"><Upload size={20} /></span>
-                  <span className="upload-copy"><strong>{selectedImage?.name ?? (member.imagePath ? 'Image enregistrée dans le coffre' : 'Dépose ton QR officiel ici')}</strong><small>PNG, JPG ou WebP · 2 Mo maximum</small></span>
-                  <span className="upload-action">Parcourir</span>
-                </div>
-              )}
-              <p className="field-note"><ShieldCheck size={14} /> Le QR et tes informations sont chiffrés avant leur envoi.</p>
               <button className="save-button" type="submit" disabled={busy}>{busy ? <span className="spinner" /> : <><span>Enregistrer mon espace</span><ArrowRight size={18} /></>}</button>
             </form>
 
@@ -476,10 +440,23 @@ function App() {
               <div className="pass-card-top"><div><span className="pass-overline">BASIC-FIT</span><strong>MEMBER PASS</strong></div><span className="pass-brand-icon"><Dumbbell size={17} /></span></div>
               <div className="pass-divider"><span /></div>
               <div className="qr-stage">
-                {hasSavedQr ? (
-                  member.qrSource === 'text' ? <img className="qr-image" src={qrCodeUrl ?? undefined} alt="QR code enregistré" /> : <img className="qr-image qr-imported-image" src={qrImageUrl ?? undefined} alt="Image du QR code officiel" />
+                {member.memberNumber.trim() && dynamicQr ? (
+                  <div className="live-qr">
+                    <span className="live-label">Live</span>
+                    <img className="qr-image" src={dynamicQr} alt="QR code dynamique" />
+                    <span className="live-code">{dynamicCode}</span>
+                    <div className="progress-wrap">
+                      <div className="progress-bar">
+                        <div className="progress-fill" style={{ width: `${progress}%` }} />
+                      </div>
+                      <div className="progress-label">
+                        <span>Prochain refresh</span>
+                        <span>{(5 - (progress / 100) * 5).toFixed(1)}s</span>
+                      </div>
+                    </div>
+                  </div>
                 ) : (
-                  <div className="qr-placeholder"><span className="qr-placeholder-icon"><QrCode size={36} /></span><strong>Ton QR apparaîtra ici</strong><span>Ajoute-le depuis le formulaire</span></div>
+                  <div className="qr-placeholder"><span className="qr-placeholder-icon"><QrCode size={36} /></span><strong>Ton QR apparaîtra ici</strong><span>Renseigne ton numéro d'adhérent pour le générer</span></div>
                 )}
               </div>
               <div className="pass-person"><span className="pass-initials">{memberInitials}</span><div className="pass-person-copy"><span>MEMBRE</span><strong>{member.name || 'Ton nom'}</strong><small>{showDetails && member.memberNumber ? member.memberNumber : member.memberNumber ? `•••• ${member.memberNumber.slice(-4)}` : 'Numéro non renseigné'}</small></div><span className="pass-check"><Check size={15} /></span></div>
