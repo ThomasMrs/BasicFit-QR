@@ -319,16 +319,53 @@ function App() {
         <section className="welcome-row" id="top">
           <div>
             <div className="eyebrow"><span className="eyebrow-line" /> TON ESPACE MEMBRE</div>
-            <h1>Prêt à <span>bouger.</span></h1>
-            <p>Ton accès Basic-Fit réuni dans un espace privé, simple et rapide.</p>
+            <h1>Ton pass. <span>Ton rythme.</span></h1>
+            <p>Ton accès Basic-Fit, toujours à portée de main.</p>
           </div>
+          <span className="welcome-status"><ShieldCheck size={15} /> Ton espace privé</span>
         </section>
 
         {flash && <div className={`flash flash-${flash.kind}`} role="status"><span className="flash-icon">{flash.kind === 'success' ? <Check size={16} /> : flash.kind === 'error' ? '!' : <ShieldCheck size={16} />}</span>{flash.message}</div>}
 
         <section className="member-layout">
-          <div className="member-column">
-            <div className="section-heading"><div><span className="section-kicker">TON PROFIL</span><h2>Carte de membre</h2></div><span className="member-avatar">{memberInitials}</span></div>
+          <aside className="pass-column" id="pass" aria-labelledby="pass-heading">
+            <div className="pass-section-heading">
+              <div><span className="section-kicker">TON ACCÈS</span><h2 id="pass-heading">Mon pass</h2></div>
+              <span className="pass-auto"><Sparkles size={11} /> Mise à jour auto</span>
+            </div>
+            <div className="pass-card">
+              <div className="pass-card-top"><div><span className="pass-overline">BASIC-FIT</span><strong>Pass personnel</strong></div><span className="pass-brand-icon"><Dumbbell size={17} /></span></div>
+              <div className="pass-divider"><span /></div>
+              <div className="qr-stage">
+                {member.memberNumber.trim() && dynamicQr ? (
+                  <div className="live-qr">
+                    <span className="live-label">En direct</span>
+                    <img className="qr-image" src={dynamicQr} alt="QR code dynamique" />
+                    <span className="live-code">{dynamicCode}</span>
+                    <div className="progress-wrap">
+                      <div className="progress-bar">
+                        <div className="progress-fill" style={{ width: `${progress}%` }} />
+                      </div>
+                      <div className="progress-label">
+                        <span>Actualisation du QR</span>
+                        <span>{(5 - (progress / 100) * 5).toFixed(1)}s</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="qr-placeholder"><span className="qr-placeholder-icon"><QrCode size={36} /></span><strong>Ton QR apparaîtra ici</strong><span>Renseigne ton numéro d'adhérent pour le générer</span></div>
+                )}
+              </div>
+              <div className="pass-person"><span className="pass-initials">{memberInitials}</span><div className="pass-person-copy"><span>MEMBRE</span><strong>{member.name || 'Ton nom'}</strong><small>{showDetails && member.memberNumber ? member.memberNumber : member.memberNumber ? `•••• ${member.memberNumber.slice(-4)}` : 'Numéro non renseigné'}</small></div><span className="pass-check"><Check size={15} /></span></div>
+              <div className="pass-bottom"><span><span className="online-dot" /> ESPACE PERSONNEL</span><span>NO. {member.memberNumber ? member.memberNumber.slice(-4) : '——'}</span></div>
+            </div>
+
+            <div className="expiry-note"><Sparkles size={15} /><span>Un QR Basic-Fit peut expirer. Pour l'entrée, utilise le QR à jour fourni par l'application officielle.</span></div>
+          </aside>
+
+          <div className="member-column" id="profile" aria-labelledby="profile-heading">
+            <div className="section-heading"><div><span className="section-kicker">LES ESSENTIELS</span><h2 id="profile-heading">Mon profil</h2></div><span className="member-avatar">{memberInitials}</span></div>
+            <p className="profile-description">Tes informations de membre, réunies au même endroit.</p>
 
             <form className="profile-form" onSubmit={saveMember}>
               <div className="form-grid">
@@ -502,9 +539,9 @@ function App() {
               </div>
 
               <div className="form-separator" />
-              <div className="qr-form-heading"><div><span className="section-kicker">TON QR CODE</span><h3>Génération automatique GM2</h3></div><QrCode size={21} /></div>
+              <div className="qr-form-heading"><div><span className="section-kicker">TOUJOURS À JOUR</span><h3>Un pass qui suit ton rythme</h3></div><QrCode size={21} /></div>
               <p className="field-note" style={{ marginTop: '-8px', marginBottom: '16px' }}>
-                <Sparkles size={14} /> Ton QR code est calculé via le protocole officiel (GM2 avec signature SHA-256) et mis à jour toutes les 5 secondes.
+                <Sparkles size={14} /> Ton QR code se renouvelle automatiquement toutes les 5 secondes.
               </p>
 
               <button className="save-button" type="submit" disabled={busy}>{busy ? <span className="spinner" /> : <><span>Enregistrer mon espace</span><ArrowRight size={18} /></>}</button>
@@ -512,40 +549,13 @@ function App() {
 
             <div className="profile-footnote"><BadgeCheck size={16} /><span>{lastSaved ? `Dernière sauvegarde le ${lastSaved}` : 'Ton profil est visible uniquement quand tu es connecté.'}</span></div>
           </div>
-
-          <aside className="pass-column">
-            <div className="pass-card">
-              <div className="pass-card-top"><div><span className="pass-overline">BASIC-FIT</span><strong>MEMBER PASS</strong></div><span className="pass-brand-icon"><Dumbbell size={17} /></span></div>
-              <div className="pass-divider"><span /></div>
-              <div className="qr-stage">
-                {member.memberNumber.trim() && dynamicQr ? (
-                  <div className="live-qr">
-                    <span className="live-label">Live</span>
-                    <img className="qr-image" src={dynamicQr} alt="QR code dynamique" />
-                    <span className="live-code">{dynamicCode}</span>
-                    <div className="progress-wrap">
-                      <div className="progress-bar">
-                        <div className="progress-fill" style={{ width: `${progress}%` }} />
-                      </div>
-                      <div className="progress-label">
-                        <span>Prochain refresh</span>
-                        <span>{(5 - (progress / 100) * 5).toFixed(1)}s</span>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="qr-placeholder"><span className="qr-placeholder-icon"><QrCode size={36} /></span><strong>Ton QR apparaîtra ici</strong><span>Renseigne ton numéro d'adhérent pour le générer</span></div>
-                )}
-              </div>
-              <div className="pass-person"><span className="pass-initials">{memberInitials}</span><div className="pass-person-copy"><span>MEMBRE</span><strong>{member.name || 'Ton nom'}</strong><small>{showDetails && member.memberNumber ? member.memberNumber : member.memberNumber ? `•••• ${member.memberNumber.slice(-4)}` : 'Numéro non renseigné'}</small></div><span className="pass-check"><Check size={15} /></span></div>
-              <div className="pass-bottom"><span><span className="online-dot" /> ESPACE PERSONNEL</span><span>NO. {member.memberNumber ? member.memberNumber.slice(-4) : '——'}</span></div>
-            </div>
-
-            <div className="expiry-note"><Sparkles size={15} /><span>Un QR Basic-Fit peut expirer. Pour l'entrée, utilise le QR à jour fourni par l'application officielle.</span></div>
-          </aside>
         </section>
 
         <footer className="dashboard-footer"><span>basicpass <i>·</i> TON ACCÈS, EN TOUTE SIMPLICITÉ</span><button onClick={signOut}>Se déconnecter <LogOut size={14} /></button></footer>
+        <nav className="mobile-dock" aria-label="Accès rapide">
+          <a href="#pass"><QrCode size={18} /><span>Mon pass</span></a>
+          <a href="#profile"><UserRound size={18} /><span>Mon profil</span></a>
+        </nav>
       </div>
     </main>
   )
@@ -555,23 +565,94 @@ function Brand() {
   return <div className="auth-brand"><span className="brand-mark"><Dumbbell size={21} strokeWidth={2.7} /></span><span className="brand-copy"><strong>basic<span>pass</span></strong><small>ESPACE PERSONNEL</small></span></div>
 }
 
+function StoryPass() {
+  return (
+    <div className="story-pass" aria-hidden="true">
+      <div className="story-pass-top">
+        <div><span>BASIC-FIT</span><strong>MEMBER PASS</strong></div>
+        <span className="story-pass-icon"><Dumbbell size={20} /></span>
+      </div>
+      <div className="story-pass-qr">
+        <svg viewBox="0 0 116 116" fill="none">
+          <rect width="116" height="116" rx="12" fill="white" />
+          <g fill="#17191D">
+            <path fillRule="evenodd" d="M8 8h28v28H8V8Zm4 4v20h20V12H12Zm4 4h12v12H16V16ZM80 8h28v28H80V8Zm4 4v20h20V12H84Zm4 4h12v12H88V16ZM8 80h28v28H8V80Zm4 4v20h20V84H12Zm4 4h12v12H16V88Z" />
+            <path d="M44 8h8v4h-8zM60 8h4v8h-4zM68 8h4v4h-4zM40 16h8v4h-8zM52 16h4v12h-4zM64 20h12v4H64zM40 24h8v8h-8zM60 28h4v8h-4zM68 28h8v4h-8zM8 44h12v4H8zM24 40h8v8h-8zM36 40h4v12h-4zM44 40h12v4H44zM64 40h8v8h-8zM80 40h4v8h-4zM88 44h12v4H88zM104 40h4v12h-4zM12 52h4v8h-4zM20 52h12v4H20zM40 56h12v4H40zM56 48h4v16h-4zM64 56h12v4H64zM84 52h8v8h-8zM100 56h8v4h-8zM8 64h8v8H8zM24 60h4v12h-4zM32 64h8v4h-8zM44 64h4v8h-4zM52 68h12v4H52zM68 64h4v12h-4zM76 64h8v4h-8zM88 68h12v4H88zM104 64h4v12h-4zM40 80h8v4h-8zM52 76h4v12h-4zM60 80h12v4H60zM76 76h20v4H76zM76 80h4v16h-4zM92 80h4v16h-4zM80 92h12v4H80zM84 84h4v4h-4zM104 84h4v8h-4zM40 92h8v8h-8zM56 92h12v4H56zM64 96h4v12h-4zM44 104h12v4H44zM72 100h12v4H72zM88 104h8v4h-8zM100 100h8v8h-8z" />
+          </g>
+        </svg>
+      </div>
+      <div className="story-pass-bottom">
+        <div className="story-pass-identity"><span>TON ESPACE MEMBRE</span><strong>À portée de main.</strong></div>
+        <span className="story-pass-status"><span className="online-dot" /> EN DIRECT</span>
+      </div>
+    </div>
+  )
+}
+
 function AuthScreen(props: {
   mode: AuthMode; setMode: (mode: AuthMode) => void; email: string; setEmail: (value: string) => void
   password: string; setPassword: (value: string) => void; showPassword: boolean; togglePassword: () => void
   busy: boolean; flash: Flash; onSubmit: (event: FormEvent<HTMLFormElement>) => void
 }) {
   const signup = props.mode === 'signup'
-  return <main className="gate-page"><div className="gate-layout"><section className="gate-story"><Brand /><div className="story-copy"><span className="eyebrow"><span className="eyebrow-line" /> TON PASS. TON RYTHME.</span><h1>La salle t'attend.<br /><span>Ton QR aussi.</span></h1><p>Un espace membre épuré pour garder tes informations Basic-Fit sous la main.</p><div className="story-stamp"><span><ShieldCheck size={17} /></span><div><strong>Connexion sécurisée</strong><small>Tes données sont protégées par ton compte.</small></div></div></div><div className="story-fade-mark">B.</div><div className="story-bottom">UN ESPACE PERSONNEL <i>·</i> UNE INTERFACE SANS FIORITURES</div></section>
-    <section className="gate-panel"><div className="gate-card"><div className="mobile-brand"><Brand /></div><div className="panel-eyebrow">{signup ? 'TON ESPACE PERSONNEL' : 'BON RETOUR'}</div><h2>{signup ? 'Créer mon espace' : 'Se connecter'}</h2><p className="gate-subtitle">{signup ? 'Quelques instants pour créer ton espace membre.' : 'Retrouve ton QR et tes informations de membre.'}</p>
-      {props.flash && <div className={`flash flash-${props.flash.kind}`} role="status">{props.flash.message}</div>}
-      <form className="gate-form" onSubmit={props.onSubmit}>
-        <label className="field"><span>Adresse e-mail</span><div className="input-wrap"><UserRound size={17} /><input type="email" value={props.email} onChange={(event) => props.setEmail(event.target.value)} placeholder="toi@exemple.fr" autoComplete="email" required /></div></label>
-        <label className="field"><span>Mot de passe du compte</span><div className="input-wrap"><LockKeyhole size={17} /><input type={props.showPassword ? 'text' : 'password'} value={props.password} onChange={(event) => props.setPassword(event.target.value)} placeholder="Au moins 8 caractères" minLength={8} autoComplete={signup ? 'new-password' : 'current-password'} required /><button type="button" className="password-toggle" onClick={props.togglePassword} aria-label={props.showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}>{props.showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div></label>
-        <button className="save-button gate-submit" disabled={props.busy}>{props.busy ? <span className="spinner" /> : <><span>{signup ? 'Créer mon compte' : 'Accéder à mon espace'}</span><ArrowRight size={18} /></>}</button>
-      </form>
-      <div className="gate-switch">{signup ? 'Tu as déjà un compte ?' : 'Pas encore de compte ?'} <button onClick={() => props.setMode(signup ? 'login' : 'signup')}>{signup ? 'Se connecter' : 'Créer un compte'}</button></div>
-      <div className="gate-assurance"><ShieldCheck size={16} /><span>Ton mot de passe Basic-Fit n'est jamais demandé ni enregistré ici.</span></div>
-    </div><div className="gate-panel-bottom">© BASIC PASS <span>·</span> ESPACE PRIVÉ</div></section></div></main>
+  return (
+    <main className="gate-page">
+      <div className="gate-layout">
+        <section className="gate-story">
+          <Brand />
+          <div className="story-copy">
+            <span className="eyebrow"><span className="eyebrow-line" /> TON PASS. TON RYTHME.</span>
+            <h1>La salle t'attend.<br /><span>Ton QR aussi.</span></h1>
+            <p>Un espace membre épuré pour garder tes informations Basic-Fit sous la main.</p>
+            <div className="story-stamp">
+              <span><ShieldCheck size={17} /></span>
+              <div><strong>Connexion sécurisée</strong><small>Tes données sont protégées par ton compte.</small></div>
+            </div>
+          </div>
+          <StoryPass />
+          <div className="story-fade-mark" aria-hidden="true">B.</div>
+          <div className="story-bottom">UN ESPACE PERSONNEL <i>·</i> UNE INTERFACE SANS FIORITURES</div>
+        </section>
+
+        <section className="gate-panel">
+          <div className="gate-card">
+            <div className="mobile-brand"><Brand /></div>
+            <div className="panel-eyebrow">{signup ? 'TON ESPACE PERSONNEL' : 'BON RETOUR'}</div>
+            <h2>{signup ? 'Créer mon espace' : 'Se connecter'}</h2>
+            <p className="gate-subtitle">{signup ? 'Quelques instants pour créer ton espace membre.' : 'Retrouve ton QR et tes informations de membre.'}</p>
+            {props.flash && <div className={`flash flash-${props.flash.kind}`} role="status">{props.flash.message}</div>}
+
+            <form className="gate-form" onSubmit={props.onSubmit}>
+              <label className="field">
+                <span>Adresse e-mail</span>
+                <div className="input-wrap">
+                  <UserRound size={17} />
+                  <input type="email" value={props.email} onChange={(event) => props.setEmail(event.target.value)} placeholder="toi@exemple.fr" autoComplete="email" required />
+                </div>
+              </label>
+              <label className="field">
+                <span>Mot de passe du compte</span>
+                <div className="input-wrap">
+                  <LockKeyhole size={17} />
+                  <input type={props.showPassword ? 'text' : 'password'} value={props.password} onChange={(event) => props.setPassword(event.target.value)} placeholder="Au moins 8 caractères" minLength={8} autoComplete={signup ? 'new-password' : 'current-password'} required />
+                  <button type="button" className="password-toggle" onClick={props.togglePassword} aria-label={props.showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}>{props.showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button>
+                </div>
+              </label>
+              <button className="save-button gate-submit" disabled={props.busy}>
+                {props.busy ? <span className="spinner" /> : <><span>{signup ? 'Créer mon compte' : 'Accéder à mon espace'}</span><ArrowRight size={18} /></>}
+              </button>
+            </form>
+
+            <div className="gate-switch">
+              {signup ? 'Tu as déjà un compte ?' : 'Pas encore de compte ?'} <button onClick={() => props.setMode(signup ? 'login' : 'signup')}>{signup ? 'Se connecter' : 'Créer un compte'}</button>
+            </div>
+            <div className="gate-assurance"><ShieldCheck size={16} /><span>Ton mot de passe Basic-Fit n'est jamais demandé ni enregistré ici.</span></div>
+          </div>
+          <div className="gate-panel-bottom">© BASIC PASS <span>·</span> ESPACE PRIVÉ</div>
+        </section>
+      </div>
+    </main>
+  )
 }
 
 function ConfigurationScreen() {
