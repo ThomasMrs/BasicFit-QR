@@ -1,0 +1,29 @@
+{
+  "name": "Basic Pass — Mon QR Code",
+  "short_name": "Basic Pass",
+  "description": "Mon pass d'accès Basic-Fit dynamique à portée de main.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1e1e1d",
+  "theme_color": "#f4511e",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
